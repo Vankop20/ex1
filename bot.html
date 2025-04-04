@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Чат-бот OpenAI (или DeepSeek)</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #2c3e50;
+      margin: 0;
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    #chat-container {
+      width: 100%;
+      max-width: 480px;
+      margin: auto;
+      background: #ecf0f1;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    #chat-box {
+      height: 350px;
+      overflow-y: auto;
+      border: 1px solid #bdc3c7;
+      margin-bottom: 15px;
+      padding: 15px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: inset 0 1px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .message {
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      max-width: 90%;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .user-message {
+      background-color: #3498db;
+      color: white;
+      text-align: right;
+      margin-left: auto;
+    }
+
+    .bot-message {
+      background-color: #95a5a6;
+      color: white;
+      text-align: left;
+      margin-right: auto;
+    }
+
+    .message:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    #input-container {
+      display: flex;
+      gap: 10px;
+    }
+
+    #message-input {
+      flex: 1;
+      padding: 15px;
+      border: 2px solid #3498db; /* Цвет границы поля ввода */
+      border-radius: 10px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    #message-input:focus {
+      border-color: #2980b9;
+      outline: none;
+    }
+
+    #send-button {
+      padding: 12px 20px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+      font-size: 16px;
+    }
+
+    #send-button:hover {
+      background-color: #c0392b;
+      transform: scale(1.05);
+    }
+</style>
+</head>
+<body>
+<h1>Чат-бот</h1>
+<div id="chat-container">
+  <div id="chat-box"></div>
+  <div id="input-container">
+    <input type="text" id="message-input" placeholder="Введите сообщение...">
+    <button id="send-button">Отправить</button>
+  </div>
+</div>
+
+<script>
+  const chatBox = document.getElementById("chat-box");
+  const messageInput = document.getElementById("message-input");
+  const sendButton = document.getElementById("send-button");
+
+  // API-ключ OpenAI
+  const API_KEY = "sk_4eC39HqLyjWDarjtT1zdp7dc"; //не работает...
+  const BASE_URL = "https://api.openai.com/v1/chat/completions";
+  async function getBotResponse(userMessage) {
+    const requestData = {
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: "Ты умный помощник." },
+        { role: "user", content: userMessage }
+      ]
+    };
+    try {
+      const response = await fetch(BASE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify(requestData)
+      });
+      if (!response.ok) {
+        throw new Error(`Ошибка HTTP: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.choices[0].message.content;
+    } catch (error) {
+      console.error("Ошибка API:", error);
+      return "Ошибка при подключении к API. Пожалуйста, попробуйте позже.";
+    }
+  }
+  function addMessage(message, sender) {
+    const messageElement = document.createElement("div");
+    messageElement.classList.add("message", sender === "Вы" ? "user-message" : "bot-message");
+    messageElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
+    chatBox.appendChild(messageElement);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+  async function sendMessage() {
+    const userMessage = messageInput.value.trim();
+    if (!userMessage) return;
+    addMessage(userMessage, "Вы");
+    messageInput.value = "";
+    const botMessage = await getBotResponse(userMessage);
+    addMessage(botMessage, "Бот");
+  }
+  sendButton.addEventListener("click", sendMessage);
+  messageInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
+</script>
+
+</body>
+</html>
